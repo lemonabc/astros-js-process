@@ -1,0 +1,14 @@
+{
+  "name": "astros-js-process",
+  "version": "0.0.4",
+  "description": "",
+  "main": "astro-js-process.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+      "lang-utils":"^0.0.2"
+  },
+  "author": "",
+  "license": "ISC"
+}
