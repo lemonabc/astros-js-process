@@ -37,19 +37,19 @@ module.exports = new astro.Middleware({
         var wcError = '';
         assets.forEach(function(ast) {
             if (!ast.data)
-                wcError += ['/* ', 'webCom:'+ast.filePath + ' is miss */',''].join('\n');
-            else{
+                wcError += ['/* ', 'webCom:' + ast.filePath + ' is miss */', ''].join('\n');
+            else {
                 webComCode += '/* ' + ast.filePath + ' */\n' + ast.data + '\n';
             }
         });
-        asset.data = webComCode + asset.data;
+        asset.data = webComCode + (asset.data || '');
         // 读取依赖组件
         asset.jsLibs = asset.jsLibs || [];
-        let jsLibCode   = '',
-            unCombined  = [],
-            combined    = [],
-            errorMsg    = asset.jsLibs[0] || '',
-            jsLibs  = asset.jsLibs[1] || [];
+        let jsLibCode = '',
+            unCombined = [],
+            combined = [],
+            errorMsg = asset.jsLibs[0] || '',
+            jsLibs = asset.jsLibs[1] || [];
         // 加载所有JS组件
         jsLibs = jsLibs.map(function(js) {
             if (util.inArray(js, prjCfg.unCombined)) {
@@ -69,13 +69,13 @@ module.exports = new astro.Middleware({
         reader.then(function(assets) {
             assets.forEach(function(at) {
                 if (at.data) {
-                    jsLibCode += ['','/* '+ at.filePath +' */', at.data, ''].join('\n');
+                    jsLibCode += ['', '/* ' + at.filePath + ' */', at.data, ''].join('\n');
                     return;
                 }
                 errorMsg += nodeUtil.format('\n/* jsLib(%s) is miss, project:%s */', js, project);
             });
             jsLibCode = '/* unCombined:' + unCombined.join(',') + ' */\n/* jsCom:' + combined.join(',') + ' */ \n' + jsLibCode + '\n';
-            asset.data = [wcError, errorMsg, jsLibCode, '/* ' + asset.filePath+ ' */', asset.data].join('\n');
+            asset.data = [wcError, errorMsg, jsLibCode, '/* ' + asset.filePath + ' */', asset.data||''].join('\n');
             next(asset);
         })
     }).catch(function(error) {
