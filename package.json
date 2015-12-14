@@ -1,6 +1,7 @@
 {
   "name": "astros-js-process",
-  "version": "0.0.5",
+  "version": "0.0.6",
+  "_version": "0.0.6",
   "description": "",
   "main": "astro-js-process.js",
   "scripts": {

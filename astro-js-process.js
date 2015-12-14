@@ -67,15 +67,21 @@ module.exports = new astro.Middleware({
         });
         let reader = astro.Asset.getContents(jsLibs);
         reader.then(function(assets) {
-            assets.forEach(function(at) {
-                if (at.data) {
-                    jsLibCode += ['', '/* ' + at.filePath + ' */', at.data, ''].join('\n');
-                    return;
-                }
-                errorMsg += nodeUtil.format('\n/* jsLib(%s) is miss, project:%s */', js, project);
-            });
-            jsLibCode = '/* unCombined:' + unCombined.join(',') + ' */\n/* jsCom:' + combined.join(',') + ' */ \n' + jsLibCode + '\n';
-            asset.data = [wcError, errorMsg, jsLibCode, '/* ' + asset.filePath + ' */', asset.data||''].join('\n');
+            try{
+                assets.forEach(function(at) {
+                    if (at.data) {
+                        jsLibCode += ['', '/* ' + at.filePath + ' */', at.data, ''].join('\n');
+                        return;
+                    }
+
+                    errorMsg += nodeUtil.format('\n/* jsLib(%s) is miss, project:%s */', asset.info, project);
+                });
+
+                jsLibCode = '/* unCombined:' + unCombined.join(',') + ' */\n/* jsCom:' + combined.join(',') + ' */ \n' + jsLibCode + '\n';
+                asset.data = [wcError, errorMsg, jsLibCode, '/* ' + asset.filePath + ' */', asset.data||''].join('\n');
+            }catch(e){
+                console.error('astro-js-proces\n',e.stack);
+            }
             next(asset);
         })
     }).catch(function(error) {
