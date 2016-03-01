@@ -41,10 +41,9 @@ module.exports = new astro.Middleware({
                 webComCode += '/* ' + ast.filePath + ' */\n' + ast.data + '\n';
             }
         });
-        console.log(asset.jsLibs);
         asset.data = webComCode + (asset.data || '');
         // 读取依赖组件
-        asset.jsLibs = asset.jsLibs || [];
+        asset.jsLibs = asset.jsLibs || ['',[]];
         let jsLibCode = '',
             unCombined = [],
             combined = [],
