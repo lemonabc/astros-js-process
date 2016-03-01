@@ -12,7 +12,6 @@ module.exports = new astro.Middleware({
     fileType: 'js'
 }, function(asset, next) {
     var project = asset.project;
-
     var prjCfg = Object.assign({
         source: {},
         unCombine: []
@@ -32,7 +31,7 @@ module.exports = new astro.Middleware({
             });
         })
     }
-    let reader = astro.Asset.getContents(components);
+    let reader = astro.Asset.getContents(components||[]);
     reader.then(function(assets) {
         var wcError = '';
         assets.forEach(function(ast) {
@@ -42,6 +41,7 @@ module.exports = new astro.Middleware({
                 webComCode += '/* ' + ast.filePath + ' */\n' + ast.data + '\n';
             }
         });
+        console.log(asset.jsLibs);
         asset.data = webComCode + (asset.data || '');
         // 读取依赖组件
         asset.jsLibs = asset.jsLibs || [];
