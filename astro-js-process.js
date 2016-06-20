@@ -1,25 +1,25 @@
 'use strict';
 
-var nodeUrl = require('url');
-var nodePath = require('path');
-var nodeFs = require('fs');
-var nodeUtil = require('util');
+let nodeUrl = require('url');
+let nodePath = require('path');
+let nodeFs = require('fs');
+let nodeUtil = require('util');
 
-var util = require('lang-utils');
+let util = require('lang-utils');
 
 module.exports = new astro.Middleware({
     modType: 'page',
     fileType: 'js'
 }, function(asset, next) {
-    var project = asset.project;
-    var prjCfg = Object.assign({
+    let project = asset.project,
+        self    = this,
+        prjCfg  = Object.assign({
         source: {},
         unCombine: []
-    }, asset.prjCfg);
+    }, asset.prjCfg),
     // 加载Web组件JS
-    let webComCode = '',
+        webComCode = '',
         components = [];
-
     if (asset.components && asset.components.length) {
         components = asset.components.map(function(wc) {
             return new astro.Asset({
@@ -31,40 +31,42 @@ module.exports = new astro.Middleware({
             });
         })
     }
+
     let reader = astro.Asset.getContents(components||[]);
     reader.then(function(assets) {
-        var wcError = '';
+        let wcError = '';
         assets.forEach(function(ast) {
             if (!ast.data)
-                wcError += ['/* ', 'webCom:' + ast.filePath + ' is miss */', ''].join('\n');
+                wcError += ['/* webCom:' + ast.filePath + ' is miss */', ''].join('\n');
             else {
                 webComCode += '/* ' + ast.filePath + ' */\n' + ast.data + '\n';
             }
         });
-        asset.data = webComCode + (asset.data || '');
+        asset.data = webComCode + '\n/* ' + asset.filePath + ' */\n'+ (asset.data || '');
         // 读取依赖组件
         asset.jsLibs = asset.jsLibs || ['',[]];
         let jsLibCode = '',
-            unCombined = [],
+            ignore_require = [],
             combined = [],
             errorMsg = asset.jsLibs[0] || '',
             jsLibs = asset.jsLibs[1] || [];
         // 加载所有JS组件
-        jsLibs = jsLibs.map(function(js) {
-            if (util.inArray(js, prjCfg.unCombined)) {
-                unCombined.push(prjCfg.source[js] || js);
+        let _jsLibs = [];
+        jsLibs.forEach(function(js) {
+            if (util.inArray(js, self.config.ignore_require)) {
+                ignore_require.push(prjCfg.source[js] || js);
             } else {
                 combined.push(js);
-                return new astro.Asset({
+                _jsLibs.push(new astro.Asset({
                     ancestor: asset,
                     modType: 'jsCom',
                     fileType: 'js',
                     name: js,
                     project: project
-                });
+                }));
             }
         });
-        let reader = astro.Asset.getContents(jsLibs);
+        let reader = astro.Asset.getContents(_jsLibs);
         reader.then(function(assets) {
             try{
                 assets.forEach(function(at) {
@@ -72,12 +74,17 @@ module.exports = new astro.Middleware({
                         jsLibCode += ['', '/* ' + at.filePath + ' */', at.data, ''].join('\n');
                         return;
                     }
-
                     errorMsg += nodeUtil.format('\n/* jsLib(%s) is miss, project:%s */', asset.info, project);
                 });
 
-                jsLibCode = '/* unCombined:' + unCombined.join(',') + ' */\n/* jsCom:' + combined.join(',') + ' */ \n' + jsLibCode + '\n';
-                asset.data = [wcError, errorMsg, jsLibCode, '/* ' + asset.filePath + ' */', asset.data||''].join('\n');
+                jsLibCode = '/* jsCom:' + combined.join(',') + ' */ \n' + jsLibCode + '\n';
+                // jsLibCode = '/* ignore_require:' + ignore_require.join(',') + ' */\n/* jsCom:' + combined.join(',') + ' */ \n' + jsLibCode + '\n';
+
+                if(self.format!=false){
+                    asset.data =  require('js-beautify').js_beautify([wcError, errorMsg, jsLibCode, asset.data||'/*empty*/'].join('\n'));
+                }else{
+                    asset.data =  [wcError, errorMsg, jsLibCode, asset.data||'/*empty*/'].join('\n');
+                }
             }catch(e){
                 console.error('astro-js-proces\n',e.stack);
             }
