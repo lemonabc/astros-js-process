@@ -86,12 +86,12 @@ module.exports = new astro.Middleware({
                     asset.data =  [wcError, errorMsg, jsLibCode, asset.data||'/*empty*/'].join('\n');
                 }
             }catch(e){
-                console.error('astro-js-proces\n',e.stack);
+                console.error('astro-js-proces\n', asset.info, e.stack);
             }
             next(asset);
         })
     }).catch(function(error) {
-        console.error('astro-js-process', error);
+        console.error('astro-js-process', asset.info, error.stack);
         asset.data = error + '\n' + asset.data
         next(asset);
     });
